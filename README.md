@@ -1,10 +1,18 @@
 # Data-Science-for-IOT
 Keuzevak 1OP2
 
-**Inhoud**
+**Contents**
 
-In dit repository vind u alle bestanden die te maken hebben met het keuzevak Data Science for IOT. Ook is hier de voortgang te zien aan de hand van verschillende prototypes.
+In this repository you will find all the information you need to know in order to recreate this project. 
 
-**Omschrijving project**
+**Project Description**
 
-Voor dit keuzevak wil ik een LED-strip aansturen via Wi-Fi. Ik gebruik hier een Raspberry Pi (Zero/B+/3B+) voor.
+In this project we will make a small indoor weatherstation where we measure the temperature and the amount of light. This information is then sent to ThingSpeak and our own webserver. The latter of the two will allow us to control some LEDs remotely. 
+
+**Materials used**
+- ESP32s
+- Breadboard
+- Jumpercables
+- 1x LDR
+- 1x Temperature sensor
+- 1x 220 Ohm Resistors
