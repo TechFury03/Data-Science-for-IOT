@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<head>
+	<style>
+		html {
+			font-family: Helvetica;
+			text-align: center;
+		}
+		
+		h3 {
+			padding-top: 10px;
+		}
+		
+		p {
+			margin: 2px;
+			margin-bottom: 5px;
+		}
+		
+		h3 {
+			margin: 2px;
+		}
+		
+		.button {
+			background-color: #195B6A;
+			border: none;
+			color: white;
+			padding-top: 16px;
+			padding-bottom: 16px;
+			width: 160px;
+			text-decoration: none;
+			font-size: 30px;
+			margin-top: 20px;
+			cursor: pointer;
+			border-radius: 8px;
+		}
+		
+		.button2 {
+			background-color: #6880a3;
+		}
+	</style>
+</head>
+<body>
+	<h1>Remote Control Home</h1>
+	<h3>Temperature</h3>
+	<p>Measurement</p>
+	<h3>Pressure</h3>
+	<p>Measurement</p>
+	<h3>Light</h3>
+	<p>Measurement</p>
+	
+	<p>
+		<a href="/LED1/true">
+			<button class="button button2">LED 1</button>
+		</a>
+	</p>
+	<p>
+		<a href"/LED2/true">
+			<button class="button button2">LED 2</button>
+		</a>
+	</p>
+</body>
+</html>
