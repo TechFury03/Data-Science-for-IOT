@@ -1,0 +1,205 @@
+// Load libraries
+#include <WiFi.h>
+#include <ThingSpeak.h>
+#include <Adafruit_BMP280.h>
+#include <Adafruit_Sensor.h>
+
+//Variables for wifi
+WiFiClient client;
+// Replace with your network credentials
+const char* ssid     = "YOUR_NETWORK_SSID";
+const char* password = "YOUR_PASSWORD";
+WiFiServer server(80); // Set web server port number to 80
+String header;
+bool LED1State = false;
+bool LED2State = false;
+
+//define pins
+const int LED1Pin = 25;
+const int LED2Pin = 26;
+const int ldrPin = 34;
+const int tempPin = 35;
+
+//Variables to store measurements
+int ldrValue;
+float tempValue;
+float pressValue;
+
+Adafruit_BMP280 bmp; //BMP280 connect to ESP32 I2C (GPIO 21 = SDA, GPIO 22 = SCL)
+
+const char * myWriteAPIKey = "******"; //Insert your own key here
+#define channelID 123 //Insert your own channelID here
+
+// Time variables
+unsigned long currentTime = millis();
+unsigned long previousTime = 0; 
+const long timeoutTime = 2000;
+unsigned long time_1 = 0;
+
+void setup() {
+  Serial.begin(115200);
+
+  //set I/O pins
+  pinMode(LED1Pin, OUTPUT);
+  pinMode(LED2Pin, OUTPUT);
+  pinMode(ldrPin, INPUT);
+  pinMode(tempPin, INPUT);
+
+  digitalWrite(LED1Pin, LOW);
+  digitalWrite(LED2Pin, LOW);
+  wifiInit();
+  initBMP();
+  WiFi.mode(WIFI_STA);
+  ThingSpeak.begin(client);
+}
+
+void loop(){
+  wifi(); 
+  if(millis() >= time_1 + 20000){
+    time_1 += 20000;
+    getSensorData();
+    uploadThingSpeak();      
+  }
+}
+
+void initBMP(){
+  if (!bmp.begin(0x76)) {
+    Serial.println("Could not find a valid BMP280 sensor, check wiring!");
+    while (1);
+  }
+}
+
+void getSensorData(){
+  ldrValue = map(analogRead(ldrPin), 0, 4095, 0, 100); //get ldr measurement in %
+  tempValue = bmp.readTemperature(); //get temperature in Celsius
+  pressValue = bmp.readPressure(); //get pressure in Pascal
+  Serial.println("LDR Value:");
+  Serial.println(ldrValue);
+  Serial.println("Temperature Value");
+  Serial.println(tempValue);
+  Serial.println("Pressure Value");
+  Serial.println(pressValue);
+}
+
+void uploadThingSpeak(){
+    ThingSpeak.setField(1,tempValue);
+    ThingSpeak.setField(2,ldrValue);
+    ThingSpeak.setField(3,pressValue);
+    int x = ThingSpeak.writeFields(channelID, myWriteAPIKey);
+    if(x == 200){
+    Serial.println("Channel update successful.");
+    }
+    else{
+    Serial.println("Problem updating channel. HTTP error code " + String(x));
+    }
+}
+
+void wifiInit(){
+  // Connect to Wi-Fi network with SSID and password
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  // Print local IP address and start web server
+  Serial.println("");
+  Serial.println("WiFi connected.");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  server.begin();
+}
+
+void wifi(){
+  WiFiClient client = server.available();   // Listen for incoming clients
+
+  if (client) {                             // If a new client connects,
+    Serial.println("New Client.");          // print a message out in the serial port
+    String currentLine = "";                // make a String to hold incoming data from the client
+    currentTime = millis();
+    previousTime = currentTime;
+    while (client.connected() && currentTime - previousTime <= timeoutTime) { // loop while the client's connected
+      currentTime = millis();         
+      if (client.available()) {             // if there's bytes to read from the client,
+        char c = client.read();             // read a byte, then
+        Serial.write(c);                    // print it out the serial monitor
+        header += c;
+        if (c == '\n') {                    // if the byte is a newline character
+          // if the current line is blank, you got two newline characters in a row.
+          // that's the end of the client HTTP request, so send a response:
+          if (currentLine.length() == 0) {
+            // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+            // and a content-type so the client knows what's coming, then a blank line:
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-type:text/html");
+            client.println("Connection: close");
+            client.println();
+            //check url for data
+            if (header.indexOf("GET /LED1/on") >= 0) {
+              Serial.println("LED 1 on");
+              LED1State = true;
+              digitalWrite(LED1Pin, HIGH);
+            } else if (header.indexOf("GET /LED1/off") >= 0) {
+              Serial.println("LED 1 off");
+              LED1State = false;
+              digitalWrite(LED1Pin, LOW);
+            } else if (header.indexOf("GET /LED2/on") >= 0) {
+              Serial.println("LED 2 on");
+              LED2State = true;
+              digitalWrite(LED2Pin, HIGH);
+            } else if (header.indexOf("GET /LED2/off") >= 0) {
+              Serial.println("LED 2 off");
+              LED2State = false;
+              digitalWrite(LED2Pin, LOW);
+            }
+
+            //display HTML
+            client.println("<!DOCTYPE html><html>");
+            client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+            client.println("<link rel=\"icon\" href=\"data:,\">");
+            client.println("<style>html {font-family: Helvetica;text-align: center;}h3 {padding-top: 10px;}p {margin: 2px;margin-bottom: 5px;}h3 {margin: 2px;}.button {background-color: #195B6A;border: none;color: white;padding-top: 16px;padding-bottom: 16px;width: 160px;text-decoration: none;font-size: 30px;margin-top: 20px;cursor: pointer;border-radius: 8px;}.button2 {background-color: #6880a3;}</style></head>");
+            client.println("<body><h1>Remote Control Home</h1><h3>Temperatuur</h3><p>");
+            client.println(tempValue);
+            client.println(" C</p>");
+            client.println("<h3>Pressure</h3><p>");
+            client.println(pressValue);
+            client.println(" Pa</p>");
+            client.println("<h3>Licht</h3><p>");
+            client.println(ldrValue);
+            client.println(" %</p>");
+
+            //display buttons based on LED states
+            if(LED1State){
+              client.println("<p><a href=\"/LED1/off\"><button class=\"button button2\">LED1</button></a></p>");
+            } else {
+              client.println("<p><a href=\"/LED1/on\"><button class=\"button\">LED1</button></a></p>");
+            }
+            if(LED2State){
+              client.println("<p><a href=\"/LED2/off\"><button class=\"button button2\">LED2</button></a></p>");
+            } else {
+              client.println("<p><a href=\"/LED2/on\"><button class=\"button\">LED2</button></a></p>");
+            }
+
+            client.println("</body></html>");
+
+            // The HTTP response ends with another blank line
+            client.println();
+            // Break out of the while loop
+            break;
+          } else { // if you got a newline, then clear currentLine
+            currentLine = "";
+          }
+        } else if (c != '\r') {  // if you got anything else but a carriage return character,
+          currentLine += c;      // add it to the end of the currentLine
+        }
+      }
+    }
+    // Clear the header variable
+    header = "";
+    // Close the connection
+    client.stop();
+    Serial.println("Client disconnected.");
+    Serial.println("");
+  }
+}
