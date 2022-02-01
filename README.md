@@ -14,7 +14,9 @@ In this project we will make a small indoor weatherstation where we measure the 
 ![WhatsApp Image 2022-02-01 at 19 53 44](https://user-images.githubusercontent.com/95235350/152036804-d100b05e-a1a8-4d49-83f2-75a7b2fa6971.jpeg)
 ![image](https://user-images.githubusercontent.com/95235350/152036905-77c40828-e635-4c19-9363-ffda98af61ce.png)
 ![image](https://user-images.githubusercontent.com/95235350/152039556-2c573dc4-e853-4318-b941-a93b44f42a4d.png)
+
 Watch this video to see the possibilities of this project: 
+https://youtu.be/4Sg-6cWuRjk
 
 
 **Materials used**
@@ -48,6 +50,7 @@ Connect the ESP to a computer and upload the code found in this repository. Plea
 And that it! You just build your own litte weatherstation with its own webserver which you can use to control anything you want.
 
 **IoT Pipeline**
+
 ![Untitled Diagram drawio](https://user-images.githubusercontent.com/95235350/152040351-88dc798c-a972-47d0-ae28-4023a0414bb3.png)
 
 ChannelID ThingSpeak used: 1635214
